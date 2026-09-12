@@ -1,33 +1,30 @@
+import uuid
 from datetime import date
 
+from sqlalchemy import String, Float, Integer, Date, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
 
-class Membresia:
-    """Representa una membresía contratada por un miembro."""
+from database.connection import Base
 
-    def __init__(
-        self,
-        id_membresia: int,
-        id_miembro: int,
-        tipo: str,
-        precio: float,
-        duracion_dias: int,
-        fecha_inicio: date,
-        estado: str = "activa",
-    ) -> None:
-        """Inicializa una nueva instancia de Membresia."""
-        self.id_membresia = id_membresia
-        self.id_miembro = id_miembro
-        self.tipo = tipo
-        self.precio = precio
-        self.duracion_dias = duracion_dias
-        self.fecha_inicio = fecha_inicio
-        self.estado = estado
+
+class Membresia(Base):
+    __tablename__ = "membresias"
+
+    id_membresia: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, default=uuid.uuid4
+    )
+
+    id_miembro: Mapped[uuid.UUID] = mapped_column(ForeignKey("miembros.id_miembro"))
+
+    tipo: Mapped[str] = mapped_column(String(50))
+    precio: Mapped[float] = mapped_column(Float)
+    duracion_dias: Mapped[int] = mapped_column(Integer)
+    fecha_inicio: Mapped[date] = mapped_column(Date, default=date.today)
+    estado: Mapped[str] = mapped_column(String(20), default="activa")
 
     def __str__(self) -> str:
-        """Representación en texto de la entidad."""
         return (
             f"Membresia(ID: {self.id_membresia}, "
             f"Miembro: {self.id_miembro}, "
-            f"Tipo: {self.tipo}, "
-            f"Estado: {self.estado})"
+            f"Tipo: {self.tipo})"
         )

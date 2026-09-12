@@ -1,29 +1,32 @@
+import uuid
 from datetime import date
 
+from sqlalchemy import String, Date, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
 
-class Inscripcion:
-    """Representa la inscripción de un miembro a una membresía."""
+from database.connection import Base
 
-    def __init__(
-        self,
-        id_inscripcion: int,
-        id_miembro: int,
-        id_membresia: int,
-        fecha_inicio: date,
-        fecha_fin: date,
-        estado: str = "activa",
-    ):
-        """Inicializa una nueva instancia de Inscripcion."""
-        self.id_inscripcion = id_inscripcion
-        self.id_miembro = id_miembro
-        self.id_membresia = id_membresia
-        self.fecha_inicio = fecha_inicio
-        self.fecha_fin = fecha_fin
-        self.estado = estado
+
+class Inscripcion(Base):
+    __tablename__ = "inscripciones"
+
+    id_inscripcion: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, default=uuid.uuid4
+    )
+
+    id_miembro: Mapped[uuid.UUID] = mapped_column(ForeignKey("miembros.id_miembro"))
+
+    id_membresia: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("membresias.id_membresia")
+    )
+
+    fecha_inicio: Mapped[date] = mapped_column(Date)
+    fecha_fin: Mapped[date] = mapped_column(Date)
+    estado: Mapped[str] = mapped_column(String(20), default="activa")
 
     def __str__(self) -> str:
-        """Representación en texto de la entidad."""
         return (
             f"Inscripcion(ID: {self.id_inscripcion}, "
-            f"Miembro: {self.id_miembro}, Estado: {self.estado})"
+            f"Miembro: {self.id_miembro}, "
+            f"Estado: {self.estado})"
         )
