@@ -1,25 +1,26 @@
-class Clase:
-    """Representa una clase grupal ofrecida en el gimnasio."""
+import uuid
 
-    def __init__(
-        self,
-        id_clase: int,
-        id_entrenador: int,
-        nombre: str,
-        dia_semana: str,
-        hora: str,
-        capacidad_maxima: int,
-    ):
-        """Inicializa una nueva instancia de Clase."""
-        self.id_clase = id_clase
-        self.id_entrenador = id_entrenador
-        self.nombre = nombre
-        self.dia_semana = dia_semana
-        self.hora = hora
-        self.capacidad_maxima = capacidad_maxima
+from sqlalchemy import String, Integer, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
+
+from database.connection import Base
+
+
+class Clase(Base):
+    __tablename__ = "clases"
+
+    id_clase: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+
+    id_entrenador: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("entrenadores.id_entrenador")
+    )
+
+    nombre: Mapped[str] = mapped_column(String(80))
+    dia_semana: Mapped[str] = mapped_column(String(20))
+    hora: Mapped[str] = mapped_column(String(20))
+    capacidad_maxima: Mapped[int] = mapped_column(Integer)
 
     def __str__(self) -> str:
-        """Representación en texto de la entidad."""
         return (
             f"Clase(ID: {self.id_clase}, "
             f"Nombre: {self.nombre}, "

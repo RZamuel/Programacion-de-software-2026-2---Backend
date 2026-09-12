@@ -1,24 +1,27 @@
+import uuid
 from datetime import date
 
+from sqlalchemy import String, Date, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
 
-class ReservaClase:
-    """Representa la reserva de un miembro a una clase específica."""
+from database.connection import Base
 
-    def __init__(
-        self,
-        id_reserva: int,
-        id_miembro: int,
-        id_clase: int,
-        fecha_reserva: date,
-        estado: str = "confirmada",
-    ):
-        """Inicializa una nueva instancia de ReservaClase."""
-        self.id_reserva = id_reserva
-        self.id_miembro = id_miembro
-        self.id_clase = id_clase
-        self.fecha_reserva = fecha_reserva
-        self.estado = estado
+
+class ReservaClase(Base):
+    __tablename__ = "reservas_clase"
+
+    id_reserva: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+
+    id_miembro: Mapped[uuid.UUID] = mapped_column(ForeignKey("miembros.id_miembro"))
+
+    id_clase: Mapped[uuid.UUID] = mapped_column(ForeignKey("clases.id_clase"))
+
+    fecha_reserva: Mapped[date] = mapped_column(Date)
+    estado: Mapped[str] = mapped_column(String(20), default="confirmada")
 
     def __str__(self) -> str:
-        """Representación en texto de la entidad."""
-        return f"ReservaClase(ID: {self.id_reserva}, Miembro: {self.id_miembro}, Clase: {self.id_clase})"
+        return (
+            f"ReservaClase(ID: {self.id_reserva}, "
+            f"Miembro: {self.id_miembro}, "
+            f"Clase: {self.id_clase})"
+        )
