@@ -1,26 +1,26 @@
+import uuid
 from datetime import date
 
+from sqlalchemy import String, Text, Date, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
 
-class Rutina:
-    """Representa una rutina de ejercicios asignada a un miembro."""
+from database.connection import Base
 
-    def __init__(
-        self,
-        id_rutina: int,
-        id_miembro: int,
-        id_entrenador: int,
-        nombre: str,
-        descripcion: str,
-        fecha_creacion: date,
-    ):
-        """Inicializa una nueva instancia de Rutina."""
-        self.id_rutina = id_rutina
-        self.id_miembro = id_miembro
-        self.id_entrenador = id_entrenador
-        self.nombre = nombre
-        self.descripcion = descripcion
-        self.fecha_creacion = fecha_creacion
+
+class Rutina(Base):
+    __tablename__ = "rutinas"
+
+    id_rutina: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+
+    id_miembro: Mapped[uuid.UUID] = mapped_column(ForeignKey("miembros.id_miembro"))
+
+    id_entrenador: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("entrenadores.id_entrenador")
+    )
+
+    nombre: Mapped[str] = mapped_column(String(80))
+    descripcion: Mapped[str] = mapped_column(Text)
+    fecha_creacion: Mapped[date] = mapped_column(Date, default=date.today)
 
     def __str__(self) -> str:
-        """Representación en texto de la entidad."""
         return f"Rutina(ID: {self.id_rutina}, Nombre: {self.nombre})"
