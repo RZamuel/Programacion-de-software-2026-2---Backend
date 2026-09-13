@@ -1,5 +1,5 @@
-from database.connection import get_session
-from entities.clase import Clase
+from src.database.connection import get_session
+from src.entities.clase import Clase
 
 
 def crear(

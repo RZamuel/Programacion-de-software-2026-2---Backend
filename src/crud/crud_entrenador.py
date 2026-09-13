@@ -1,5 +1,5 @@
-from database.connection import get_session
-from entities.entrenador import Entrenador
+from src.database.connection import get_session
+from src.entities.entrenador import Entrenador
 
 
 def crear_entrenador(

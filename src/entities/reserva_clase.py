@@ -4,7 +4,7 @@ from datetime import date
 from sqlalchemy import String, Date, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from database.connection import Base
+from src.database.connection import Base
 
 
 class ReservaClase(Base):

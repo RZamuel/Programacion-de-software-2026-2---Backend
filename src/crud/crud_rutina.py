@@ -1,7 +1,7 @@
 from datetime import date
 
-from database.connection import get_session
-from entities.rutina import Rutina
+from src.database.connection import get_session
+from src.entities.rutina import Rutina
 
 
 def crear(
