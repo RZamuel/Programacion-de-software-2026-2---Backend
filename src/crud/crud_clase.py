@@ -1,63 +1,109 @@
-from src.entities.clase import Clase
-
-_clases_db: list[Clase] = []
-
-
-def crear_clase(clase: Clase) -> bool:
-    """Crea un nuevo registro de clase."""
-    _clases_db.append(clase)
-    return True
+from database.connection import get_session
+from entities.clase import Clase
 
 
-def leer_clases() -> list[Clase]:
-    """Consulta todos los registros de clases."""
-    return _clases_db
+def crear(
+    id_entrenador: int,
+    nombre: str,
+    dia_semana: str,
+    hora: str,
+    capacidad_maxima: int,
+) -> Clase | None:
+    session = get_session()
+    try:
+        clase = Clase(
+            id_entrenador=id_entrenador,
+            nombre=nombre,
+            dia_semana=dia_semana,
+            hora=hora,
+            capacidad_maxima=capacidad_maxima,
+        )
+
+        session.add(clase)
+        session.commit()
+        session.refresh(clase)
+
+        return clase
+
+    except Exception:
+        session.rollback()
+        return None
+
+    finally:
+        session.close()
 
 
-def leer_clase_por_id(id_clase: int) -> Clase | None:
-    """Consulta una clase específica por su ID."""
-    for clase in _clases_db:
-        if clase.id_clase == id_clase:
-            return clase
-    return None
+def listar() -> list[Clase]:
+    session = get_session()
+    try:
+        return session.query(Clase).all()
+    finally:
+        session.close()
 
 
-def actualizar_clase(
+def obtener(id_clase: int) -> Clase | None:
+    session = get_session()
+    try:
+        return session.query(Clase).filter_by(id_clase=id_clase).first()
+    finally:
+        session.close()
+
+
+def actualizar(
     id_clase: int,
-    id_entrenador: int | None = None,
     nombre: str | None = None,
     dia_semana: str | None = None,
     hora: str | None = None,
     capacidad_maxima: int | None = None,
 ) -> bool:
-    """Actualiza los datos de una clase."""
-    for clase in _clases_db:
-        if clase.id_clase == id_clase:
-            if id_entrenador is not None:
-                clase.id_entrenador = id_entrenador
+    session = get_session()
 
-            if nombre is not None:
-                clase.nombre = nombre
+    try:
+        clase = session.query(Clase).filter_by(id_clase=id_clase).first()
 
-            if dia_semana is not None:
-                clase.dia_semana = dia_semana
+        if not clase:
+            return False
 
-            if hora is not None:
-                clase.hora = hora
+        if nombre is not None:
+            clase.nombre = nombre
 
-            if capacidad_maxima is not None:
-                clase.capacidad_maxima = capacidad_maxima
+        if dia_semana is not None:
+            clase.dia_semana = dia_semana
 
-            return True
+        if hora is not None:
+            clase.hora = hora
 
-    return False
+        if capacidad_maxima is not None:
+            clase.capacidad_maxima = capacidad_maxima
+
+        session.commit()
+        return True
+
+    except Exception:
+        session.rollback()
+        return False
+
+    finally:
+        session.close()
 
 
-def eliminar_clase(id_clase: int) -> bool:
-    """Elimina un registro de clase."""
-    for i, clase in enumerate(_clases_db):
-        if clase.id_clase == id_clase:
-            _clases_db.pop(i)
-            return True
+def eliminar(id_clase: int) -> bool:
+    session = get_session()
 
-    return False
+    try:
+        clase = session.query(Clase).filter_by(id_clase=id_clase).first()
+
+        if not clase:
+            return False
+
+        session.delete(clase)
+        session.commit()
+
+        return True
+
+    except Exception:
+        session.rollback()
+        return False
+
+    finally:
+        session.close()
