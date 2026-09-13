@@ -1,8 +1,8 @@
 from datetime import date
 import uuid
 
-from database.connection import get_session
-from entities.miembro import Miembro
+from src.database.connection import get_session
+from src.entities.miembro import Miembro
 
 
 def crear(

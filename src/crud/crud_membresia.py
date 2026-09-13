@@ -1,7 +1,7 @@
 from datetime import date
 
-from database.connection import get_session
-from entities.membresia import Membresia
+from src.database.connection import get_session
+from src.entities.membresia import Membresia
 
 
 def crear_membresia(

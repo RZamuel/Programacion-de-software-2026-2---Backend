@@ -1,7 +1,7 @@
 from datetime import date
 
-from database.connection import get_session
-from entities.inscripcion import Inscripcion
+from src.database.connection import get_session
+from src.entities.inscripcion import Inscripcion
 
 
 def crear_inscripcion(
