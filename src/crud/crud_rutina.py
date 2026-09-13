@@ -1,48 +1,108 @@
-from src.entities.rutina import Rutina
+from datetime import date
 
-_rutinas_db: list[Rutina] = []
-
-
-def crear_rutina(rutina: Rutina) -> bool:
-    """Crea un nuevo registro de rutina."""
-    _rutinas_db.append(rutina)
-    return True
+from database.connection import get_session
+from entities.rutina import Rutina
 
 
-def leer_rutinas() -> list[Rutina]:
-    """Consulta todos los registros de rutinas."""
-    return _rutinas_db
+def crear(
+    id_miembro: int,
+    id_entrenador: int,
+    nombre: str,
+    descripcion: str,
+    fecha_creacion: date | None = None,
+) -> Rutina | None:
+    session = get_session()
+
+    try:
+        rutina = Rutina(
+            id_miembro=id_miembro,
+            id_entrenador=id_entrenador,
+            nombre=nombre,
+            descripcion=descripcion,
+            fecha_creacion=fecha_creacion if fecha_creacion else date.today(),
+        )
+
+        session.add(rutina)
+        session.commit()
+        session.refresh(rutina)
+
+        return rutina
+
+    except Exception:
+        session.rollback()
+        return None
+
+    finally:
+        session.close()
 
 
-def leer_rutina_por_id(id_rutina: int) -> Rutina | None:
-    """Consulta una rutina específica por su ID."""
-    for rutina in _rutinas_db:
-        if rutina.id_rutina == id_rutina:
-            return rutina
-    return None
+def listar() -> list[Rutina]:
+    session = get_session()
+
+    try:
+        return session.query(Rutina).all()
+
+    finally:
+        session.close()
 
 
-def actualizar_rutina(
-    id_rutina: int, nombre: str | None = None, descripcion: str | None = None
+def obtener(id_rutina: int) -> Rutina | None:
+    session = get_session()
+
+    try:
+        return session.query(Rutina).filter_by(id_rutina=id_rutina).first()
+
+    finally:
+        session.close()
+
+
+def actualizar(
+    id_rutina: int,
+    nombre: str | None = None,
+    descripcion: str | None = None,
 ) -> bool:
-    """Actualiza los datos de una rutina."""
-    for rutina in _rutinas_db:
-        if rutina.id_rutina == id_rutina:
-            if nombre is not None:
-                rutina.nombre = nombre
+    session = get_session()
 
-            if descripcion is not None:
-                rutina.descripcion = descripcion
+    try:
+        rutina = session.query(Rutina).filter_by(id_rutina=id_rutina).first()
 
-            return True
+        if not rutina:
+            return False
 
-    return False
+        if nombre is not None:
+            rutina.nombre = nombre
+
+        if descripcion is not None:
+            rutina.descripcion = descripcion
+
+        session.commit()
+        return True
+
+    except Exception:
+        session.rollback()
+        return False
+
+    finally:
+        session.close()
 
 
-def eliminar_rutina(id_rutina: int) -> bool:
-    """Elimina un registro de rutina."""
-    for i, rutina in enumerate(_rutinas_db):
-        if rutina.id_rutina == id_rutina:
-            _rutinas_db.pop(i)
-            return True
-    return False
+def eliminar(id_rutina: int) -> bool:
+    session = get_session()
+
+    try:
+        rutina = session.query(Rutina).filter_by(id_rutina=id_rutina).first()
+
+        if not rutina:
+            return False
+
+        session.delete(rutina)
+        session.commit()
+
+        return True
+
+    except Exception:
+        session.rollback()
+        return False
+
+    finally:
+        session.close()
