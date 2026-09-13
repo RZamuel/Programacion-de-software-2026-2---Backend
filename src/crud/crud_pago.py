@@ -1,55 +1,125 @@
-from src.entities.pago import Pago
+from datetime import date
 
-_pagos_db: list[Pago] = []
+from database.connection import get_session
+from entities.pago import Pago
 
 
-def crear_pago(pago: Pago) -> bool:
-    """Crea un nuevo registro de pago."""
-    _pagos_db.append(pago)
-    return True
+def crear_pago(
+    id_miembro: str,
+    monto: float,
+    metodo_pago: str,
+    concepto: str,
+    fecha_pago: date | None = None,
+) -> Pago | None:
+    """Crea un nuevo pago."""
+
+    session = get_session()
+
+    try:
+        pago = Pago(
+            id_miembro=id_miembro,
+            monto=monto,
+            fecha_pago=fecha_pago if fecha_pago else date.today(),
+            metodo_pago=metodo_pago,
+            concepto=concepto,
+        )
+
+        session.add(pago)
+        session.commit()
+        session.refresh(pago)
+
+        return pago
+
+    except Exception:
+        session.rollback()
+        return None
+
+    finally:
+        session.close()
 
 
 def leer_pagos() -> list[Pago]:
-    """Consulta todos los registros de pagos."""
-    return _pagos_db
+    """Obtiene todos los pagos."""
+
+    session = get_session()
+
+    try:
+        return session.query(Pago).all()
+
+    finally:
+        session.close()
 
 
-def leer_pago_por_id(id_pago: int) -> Pago | None:
-    """Consulta un pago específico por su ID."""
-    for pago in _pagos_db:
-        if pago.id_pago == id_pago:
-            return pago
-    return None
+def leer_pago_por_id(
+    id_pago: str,
+) -> Pago | None:
+    """Obtiene un pago por su UUID."""
+
+    session = get_session()
+
+    try:
+        return session.query(Pago).filter_by(id_pago=id_pago).first()
+
+    finally:
+        session.close()
 
 
 def actualizar_pago(
-    id_pago: int,
+    id_pago: str,
     monto: float | None = None,
     metodo_pago: str | None = None,
     concepto: str | None = None,
 ) -> bool:
-    """Actualiza el monto, método de pago o concepto."""
-    for pago in _pagos_db:
-        if pago.id_pago == id_pago:
-            if monto is not None:
-                pago.monto = monto
+    """Actualiza los datos de un pago."""
 
-            if metodo_pago is not None:
-                pago.metodo_pago = metodo_pago
+    session = get_session()
 
-            if concepto is not None:
-                pago.concepto = concepto
+    try:
+        pago = session.query(Pago).filter_by(id_pago=id_pago).first()
 
-            return True
+        if not pago:
+            return False
 
-    return False
+        if monto is not None:
+            pago.monto = monto
+
+        if metodo_pago is not None:
+            pago.metodo_pago = metodo_pago
+
+        if concepto is not None:
+            pago.concepto = concepto
+
+        session.commit()
+
+        return True
+
+    except Exception:
+        session.rollback()
+        return False
+
+    finally:
+        session.close()
 
 
-def eliminar_pago(id_pago: int) -> bool:
-    """Elimina un registro de pago."""
-    for i, pago in enumerate(_pagos_db):
-        if pago.id_pago == id_pago:
-            _pagos_db.pop(i)
-            return True
+def eliminar_pago(id_pago: str) -> bool:
+    """Elimina un pago."""
 
-    return False
+    session = get_session()
+
+    try:
+        pago = session.query(Pago).filter_by(id_pago=id_pago).first()
+
+        if not pago:
+            return False
+
+        session.delete(pago)
+        session.commit()
+
+        return True
+
+    except Exception:
+        session.rollback()
+        return False
+
+    finally:
+        session.close()
