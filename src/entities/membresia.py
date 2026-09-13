@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 
-from sqlalchemy import String, Float, Integer, Date, ForeignKey
+from sqlalchemy import String, Float, Integer, Date
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database.connection import Base
@@ -14,8 +14,6 @@ class Membresia(Base):
         primary_key=True, default=uuid.uuid4
     )
 
-    id_miembro: Mapped[uuid.UUID] = mapped_column(ForeignKey("miembros.id_miembro"))
-
     tipo: Mapped[str] = mapped_column(String(50))
     precio: Mapped[float] = mapped_column(Float)
     duracion_dias: Mapped[int] = mapped_column(Integer)
@@ -23,8 +21,4 @@ class Membresia(Base):
     estado: Mapped[str] = mapped_column(String(20), default="activa")
 
     def __str__(self) -> str:
-        return (
-            f"Membresia(ID: {self.id_membresia}, "
-            f"Miembro: {self.id_miembro}, "
-            f"Tipo: {self.tipo})"
-        )
+        return f"Membresia(ID: {self.id_membresia}, " f"Tipo: {self.tipo})"
