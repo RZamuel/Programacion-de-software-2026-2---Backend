@@ -1,15 +1,15 @@
 from datetime import date
 
-from database.connection import get_session
+from src.database.connection import get_session
 
-from entities.miembro import Miembro
-from entities.entrenador import Entrenador
-from entities.membresia import Membresia
-from entities.clase import Clase
-from entities.inscripcion import Inscripcion
-from entities.pago import Pago
-from entities.reserva_clase import ReservaClase
-from entities.rutina import Rutina
+from src.entities.miembro import Miembro
+from src.entities.entrenador import Entrenador
+from src.entities.membresia import Membresia
+from src.entities.clase import Clase
+from src.entities.inscripcion import Inscripcion
+from src.entities.pago import Pago
+from src.entities.reserva_clase import ReservaClase
+from src.entities.rutina import Rutina
 
 
 def poblar_base_de_datos() -> None:
