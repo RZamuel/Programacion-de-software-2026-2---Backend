@@ -1,7 +1,7 @@
 from datetime import date
 
-from database.connection import get_session
-from entities.reserva_clase import ReservaClase
+from src.database.connection import get_session
+from src.entities.reserva_clase import ReservaClase
 
 
 def crear(
