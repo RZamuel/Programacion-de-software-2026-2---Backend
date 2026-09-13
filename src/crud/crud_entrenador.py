@@ -1,62 +1,127 @@
-from src.entities.entrenador import Entrenador
+from database.connection import get_session
+from entities.entrenador import Entrenador
 
-_entrenadores_db: list[Entrenador] = []
 
+def crear_entrenador(
+    nombre: str,
+    apellido: str,
+    especialidad: str,
+    telefono: str,
+    salario: float,
+) -> Entrenador | None:
+    """Crea un nuevo entrenador."""
 
-def crear_entrenador(entrenador: Entrenador) -> bool:
-    """Crea un nuevo registro de entrenador."""
-    _entrenadores_db.append(entrenador)
-    return True
+    session = get_session()
+
+    try:
+        entrenador = Entrenador(
+            nombre=nombre,
+            apellido=apellido,
+            especialidad=especialidad,
+            telefono=telefono,
+            salario=salario,
+        )
+
+        session.add(entrenador)
+        session.commit()
+        session.refresh(entrenador)
+
+        return entrenador
+
+    except Exception:
+        session.rollback()
+        return None
+
+    finally:
+        session.close()
 
 
 def leer_entrenadores() -> list[Entrenador]:
-    """Consulta todos los registros de entrenadores."""
-    return _entrenadores_db
+    """Obtiene todos los entrenadores."""
+
+    session = get_session()
+
+    try:
+        return session.query(Entrenador).all()
+
+    finally:
+        session.close()
 
 
-def leer_entrenador_por_id(id_entrenador: int) -> Entrenador | None:
-    """Consulta un entrenador específico por su ID."""
-    for entrenador in _entrenadores_db:
-        if entrenador.id_entrenador == id_entrenador:
-            return entrenador
-    return None
+def leer_entrenador_por_id(
+    id_entrenador: str,
+) -> Entrenador | None:
+    """Obtiene un entrenador por su UUID."""
+
+    session = get_session()
+
+    try:
+        return session.query(Entrenador).filter_by(id_entrenador=id_entrenador).first()
+
+    finally:
+        session.close()
 
 
 def actualizar_entrenador(
-    id_entrenador: int,
-    nombre: str | None = None,
-    apellido: str | None = None,
+    id_entrenador: str,
     especialidad: str | None = None,
     telefono: str | None = None,
     salario: float | None = None,
 ) -> bool:
     """Actualiza los datos de un entrenador."""
-    for entrenador in _entrenadores_db:
-        if entrenador.id_entrenador == id_entrenador:
-            if nombre is not None:
-                entrenador.nombre = nombre
 
-            if apellido is not None:
-                entrenador.apellido = apellido
+    session = get_session()
 
-            if especialidad is not None:
-                entrenador.especialidad = especialidad
+    try:
+        entrenador = (
+            session.query(Entrenador).filter_by(id_entrenador=id_entrenador).first()
+        )
 
-            if telefono is not None:
-                entrenador.telefono = telefono
+        if not entrenador:
+            return False
 
-            if salario is not None:
-                entrenador.salario = salario
+        if especialidad is not None:
+            entrenador.especialidad = especialidad
 
-            return True
+        if telefono is not None:
+            entrenador.telefono = telefono
 
-    return False
+        if salario is not None:
+            entrenador.salario = salario
+
+        session.commit()
+
+        return True
+
+    except Exception:
+        session.rollback()
+        return False
+
+    finally:
+        session.close()
 
 
-def eliminar_entrenador(id_entrenador: int) -> bool:
-    """Elimina un registro de entrenador."""
-    for i, entrenador in enumerate(_entrenadores_db):
-        if entrenador.id_entrenador == id_entrenador:
-            _entrenadores_db.pop(i)
-            return True
-    return False
+def eliminar_entrenador(id_entrenador: str) -> bool:
+    """Elimina un entrenador."""
+
+    session = get_session()
+
+    try:
+        entrenador = (
+            session.query(Entrenador).filter_by(id_entrenador=id_entrenador).first()
+        )
+
+        if not entrenador:
+            return False
+
+        session.delete(entrenador)
+        session.commit()
+
+        return True
+
+    except Exception:
+        session.rollback()
+        return False
+
+    finally:
+        session.close()
