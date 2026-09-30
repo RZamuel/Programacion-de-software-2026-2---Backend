@@ -1,47 +1,49 @@
-import uuid
+from typing import Any
+from uuid import UUID
+
+from sqlalchemy.exc import IntegrityError
 
 from src.database.connection import get_session
 from src.entities.clase import Clase
-from src.entities.reserva_clase import ReservaClase
+from src.entities.entrenador import Entrenador
+
+
+def _buscar_por_id(session, id_clase: UUID) -> Clase | None:
+    return session.query(Clase).filter_by(id_clase=id_clase).first()
 
 
 def crear(
-    id_entrenador: str,
+    id_entrenador: UUID,
     nombre: str,
     dia_semana: str,
     hora: str,
     capacidad_maxima: int,
 ) -> Clase | None:
-    """Crea una nueva clase."""
     session = get_session()
     try:
-        # Convertimos el ID del entrenador a UUID para asegurar la coherencia
-        id_entrenador_uuid = uuid.UUID(str(id_entrenador))
+        # Validar que el entrenador exista
+        if not session.query(Entrenador).filter_by(id_entrenador=id_entrenador).first():
+            return None
 
         clase = Clase(
-            id_entrenador=id_entrenador_uuid,
-            nombre=nombre,
-            dia_semana=dia_semana,
-            hora=hora,
+            id_entrenador=id_entrenador,
+            nombre=nombre.strip(),
+            dia_semana=dia_semana.strip(),
+            hora=hora.strip(),
             capacidad_maxima=capacidad_maxima,
         )
-
         session.add(clase)
         session.commit()
         session.refresh(clase)
-
         return clase
-
-    except Exception:
+    except IntegrityError:
         session.rollback()
         return None
-
     finally:
         session.close()
 
 
-def leer_clases() -> list[Clase]:
-    """Obtiene todas las clases."""
+def listar() -> list[Clase]:
     session = get_session()
     try:
         return session.query(Clase).all()
@@ -49,71 +51,47 @@ def leer_clases() -> list[Clase]:
         session.close()
 
 
-def leer_clase_por_id(id_clase) -> Clase | None:
-    """Obtiene una clase por su UUID."""
+def obtener_por_id(id_clase: UUID) -> Clase | None:
     session = get_session()
     try:
-        id_uuid = uuid.UUID(str(id_clase))
-        return session.query(Clase).filter_by(id_clase=id_uuid).first()
+        return _buscar_por_id(session, id_clase)
     finally:
         session.close()
 
 
-def actualizar_clase(
-    id_clase,
-    nombre: str | None = None,
-    dia_semana: str | None = None,
-    hora: str | None = None,
-    capacidad_maxima: int | None = None,
-) -> bool:
-    """Actualiza los datos de una clase."""
+def actualizar(id_clase: UUID, **kwargs: Any) -> Clase | None:
     session = get_session()
     try:
-        id_uuid = uuid.UUID(str(id_clase))
-        clase = session.query(Clase).filter_by(id_clase=id_uuid).first()
+        clase = _buscar_por_id(session, id_clase)
+        if clase is None:
+            return None
 
-        if not clase:
-            return False
-
-        if nombre is not None:
-            clase.nombre = nombre
-        if dia_semana is not None:
-            clase.dia_semana = dia_semana
-        if hora is not None:
-            clase.hora = hora
-        if capacidad_maxima is not None:
-            clase.capacidad_maxima = capacidad_maxima
+        for key, value in kwargs.items():
+            if value is not None:
+                setattr(clase, key, value.strip() if isinstance(value, str) else value)
 
         session.commit()
-        return True
-    except Exception:
+        session.refresh(clase)
+        return clase
+    except IntegrityError:
         session.rollback()
-        return False
+        return None
     finally:
         session.close()
 
 
-def eliminar_clase(id_clase) -> bool:
-    """Elimina una clase validando que no tenga reservas asociadas."""
+def eliminar(id_clase: UUID) -> bool:
     session = get_session()
     try:
-        id_uuid = uuid.UUID(str(id_clase))
-        clase = session.query(Clase).filter_by(id_clase=id_uuid).first()
-
-        if not clase:
+        clase = _buscar_por_id(session, id_clase)
+        if clase is None:
             return False
-
-        # Validar que no existan reservas asociadas (Integridad Referencial)
-        reservas_asociadas = (
-            session.query(ReservaClase).filter_by(id_clase=id_uuid).count()
-        )
-        if reservas_asociadas > 0:
-            return False  # No se puede eliminar si tiene reservas
 
         session.delete(clase)
         session.commit()
         return True
-    except Exception:
+    except IntegrityError:
+        # La BD bloquea la eliminación si hay reservas asociadas
         session.rollback()
         return False
     finally:

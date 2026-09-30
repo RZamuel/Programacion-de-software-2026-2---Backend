@@ -1,127 +1,95 @@
+from typing import Any
+from uuid import UUID
+
+from sqlalchemy.exc import IntegrityError
+
 from src.database.connection import get_session
 from src.entities.entrenador import Entrenador
 
 
-def crear_entrenador(
+def _buscar_por_id(session, id_entrenador: UUID) -> Entrenador | None:
+    return session.query(Entrenador).filter_by(id_entrenador=id_entrenador).first()
+
+
+def crear(
     nombre: str,
     apellido: str,
     especialidad: str,
     telefono: str,
     salario: float,
 ) -> Entrenador | None:
-    """Crea un nuevo entrenador."""
-
     session = get_session()
-
     try:
         entrenador = Entrenador(
-            nombre=nombre,
-            apellido=apellido,
-            especialidad=especialidad,
-            telefono=telefono,
+            nombre=nombre.strip(),
+            apellido=apellido.strip(),
+            especialidad=especialidad.strip(),
+            telefono=telefono.strip(),
             salario=salario,
         )
-
         session.add(entrenador)
         session.commit()
         session.refresh(entrenador)
-
         return entrenador
-
-    except Exception:
+    except IntegrityError:
         session.rollback()
         return None
-
     finally:
         session.close()
 
 
-def leer_entrenadores() -> list[Entrenador]:
-    """Obtiene todos los entrenadores."""
-
+def listar() -> list[Entrenador]:
     session = get_session()
-
     try:
         return session.query(Entrenador).all()
-
     finally:
         session.close()
 
 
-def leer_entrenador_por_id(
-    id_entrenador: str,
-) -> Entrenador | None:
-    """Obtiene un entrenador por su UUID."""
-
+def obtener_por_id(id_entrenador: UUID) -> Entrenador | None:
     session = get_session()
-
     try:
-        return session.query(Entrenador).filter_by(id_entrenador=id_entrenador).first()
-
+        return _buscar_por_id(session, id_entrenador)
     finally:
         session.close()
 
 
-def actualizar_entrenador(
-    id_entrenador: str,
-    especialidad: str | None = None,
-    telefono: str | None = None,
-    salario: float | None = None,
-) -> bool:
-    """Actualiza los datos de un entrenador."""
-
+def actualizar(id_entrenador: UUID, **kwargs: Any) -> Entrenador | None:
     session = get_session()
-
     try:
-        entrenador = (
-            session.query(Entrenador).filter_by(id_entrenador=id_entrenador).first()
-        )
+        entrenador = _buscar_por_id(session, id_entrenador)
+        if entrenador is None:
+            return None
 
-        if not entrenador:
-            return False
-
-        if especialidad is not None:
-            entrenador.especialidad = especialidad
-
-        if telefono is not None:
-            entrenador.telefono = telefono
-
-        if salario is not None:
-            entrenador.salario = salario
+        for key, value in kwargs.items():
+            if value is not None:
+                setattr(
+                    entrenador, key, value.strip() if isinstance(value, str) else value
+                )
 
         session.commit()
-
-        return True
-
-    except Exception:
+        session.refresh(entrenador)
+        return entrenador
+    except IntegrityError:
         session.rollback()
-        return False
-
+        return None
     finally:
         session.close()
 
 
-def eliminar_entrenador(id_entrenador: str) -> bool:
-    """Elimina un entrenador."""
-
+def eliminar(id_entrenador: UUID) -> bool:
     session = get_session()
-
     try:
-        entrenador = (
-            session.query(Entrenador).filter_by(id_entrenador=id_entrenador).first()
-        )
-
-        if not entrenador:
+        entrenador = _buscar_por_id(session, id_entrenador)
+        if entrenador is None:
             return False
 
         session.delete(entrenador)
         session.commit()
-
         return True
-
-    except Exception:
+    except IntegrityError:
+        # La BD bloquea la eliminación si hay clases/rutinas asociadas
         session.rollback()
         return False
-
     finally:
         session.close()
