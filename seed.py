@@ -36,27 +36,36 @@ def poblar_base_de_datos() -> None:
         # 1. MIEMBROS
         # ==================================================
         miembro_1 = Miembro(
-            nombre="Carlos",
-            apellido="Pérez",
+            primer_nombre="Carlos",
+            segundo_nombre="",
+            primer_apellido="Pérez",
+            segundo_apellido="",
+            nombre_usuario="carlos.perez",
+            clave="123456",  # Clave de prueba para el login
             email="carlos.perez@email.com",
             telefono="3001234567",
-            fecha_registro=date(2026, 8, 1),
         )
 
         miembro_2 = Miembro(
-            nombre="Ana",
-            apellido="Gómez",
+            primer_nombre="Ana",
+            segundo_nombre="María",
+            primer_apellido="Gómez",
+            segundo_apellido="López",
+            nombre_usuario="ana.gomez",
+            clave="123456",
             email="ana.gomez@email.com",
             telefono="3115554433",
-            fecha_registro=date(2026, 8, 10),
         )
 
         miembro_3 = Miembro(
-            nombre="Luis",
-            apellido="Martínez",
+            primer_nombre="Luis",
+            segundo_nombre="",
+            primer_apellido="Martínez",
+            segundo_apellido="",
+            nombre_usuario="luis.martinez",
+            clave="123456",
             email="luis.martinez@email.com",
             telefono="3157778899",
-            fecha_registro=date(2026, 8, 15),
         )
 
         session.add_all([miembro_1, miembro_2, miembro_3])
