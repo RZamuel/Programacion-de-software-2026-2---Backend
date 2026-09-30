@@ -1,27 +1,35 @@
 from datetime import date
-
+from typing import Any
+from uuid import UUID
+from sqlalchemy.exc import IntegrityError
 from src.database.connection import get_session
 from src.entities.pago import Pago
+from src.entities.miembro import Miembro
 
 
-def crear_pago(
-    id_miembro: str,
+def _buscar_por_id(session, id_pago: UUID) -> Pago | None:
+    return session.query(Pago).filter_by(id_pago=id_pago).first()
+
+
+def crear(
+    id_miembro: UUID,
     monto: float,
     metodo_pago: str,
     concepto: str,
     fecha_pago: date | None = None,
 ) -> Pago | None:
-    """Crea un nuevo pago."""
-
     session = get_session()
-
     try:
+        # Validar que el miembro exista
+        if not session.query(Miembro).filter_by(id_miembro=id_miembro).first():
+            return None
+
         pago = Pago(
             id_miembro=id_miembro,
             monto=monto,
             fecha_pago=fecha_pago if fecha_pago else date.today(),
-            metodo_pago=metodo_pago,
-            concepto=concepto,
+            metodo_pago=metodo_pago.strip(),
+            concepto=concepto.strip(),
         )
 
         session.add(pago)
@@ -30,7 +38,7 @@ def crear_pago(
 
         return pago
 
-    except Exception:
+    except IntegrityError:
         session.rollback()
         return None
 
@@ -38,78 +46,51 @@ def crear_pago(
         session.close()
 
 
-def leer_pagos() -> list[Pago]:
-    """Obtiene todos los pagos."""
-
+def listar() -> list[Pago]:
     session = get_session()
-
     try:
         return session.query(Pago).all()
-
     finally:
         session.close()
 
 
-def leer_pago_por_id(
-    id_pago: str,
-) -> Pago | None:
-    """Obtiene un pago por su UUID."""
-
+def obtener_por_id(id_pago: UUID) -> Pago | None:
     session = get_session()
-
     try:
-        return session.query(Pago).filter_by(id_pago=id_pago).first()
-
+        return _buscar_por_id(session, id_pago)
     finally:
         session.close()
 
 
-def actualizar_pago(
-    id_pago: str,
-    monto: float | None = None,
-    metodo_pago: str | None = None,
-    concepto: str | None = None,
-) -> bool:
-    """Actualiza los datos de un pago."""
-
+def actualizar(id_pago: UUID, **kwargs: Any) -> Pago | None:
     session = get_session()
-
     try:
-        pago = session.query(Pago).filter_by(id_pago=id_pago).first()
+        pago = _buscar_por_id(session, id_pago)
+        if pago is None:
+            return None
 
-        if not pago:
-            return False
-
-        if monto is not None:
-            pago.monto = monto
-
-        if metodo_pago is not None:
-            pago.metodo_pago = metodo_pago
-
-        if concepto is not None:
-            pago.concepto = concepto
+        for key, value in kwargs.items():
+            if value is not None:
+                setattr(pago, key, value.strip() if isinstance(value, str) else value)
 
         session.commit()
+        session.refresh(pago)
 
-        return True
+        return pago
 
-    except Exception:
+    except IntegrityError:
         session.rollback()
-        return False
+        return None
 
     finally:
         session.close()
 
 
-def eliminar_pago(id_pago: str) -> bool:
-    """Elimina un pago."""
-
+def eliminar(id_pago: UUID) -> bool:
     session = get_session()
-
     try:
-        pago = session.query(Pago).filter_by(id_pago=id_pago).first()
-
-        if not pago:
+        pago = _buscar_por_id(session, id_pago)
+        if pago is None:
             return False
 
         session.delete(pago)
@@ -117,7 +98,7 @@ def eliminar_pago(id_pago: str) -> bool:
 
         return True
 
-    except Exception:
+    except IntegrityError:
         session.rollback()
         return False
 
